@@ -1,0 +1,16 @@
+# requirements.txt
+
+numpy==1.24.4
+
+# Web Framework
+Flask==3.0.3
+gunicorn==22.0.0
+Flask-Cors==4.0.1
+
+# LangChain and Google Gemini Integration
+langchain==0.2.1
+langchain-google-genai==1.0.4
+langchain-core==0.2.2
+
+# Environment Variables
+python-dotenv==1.0.1
