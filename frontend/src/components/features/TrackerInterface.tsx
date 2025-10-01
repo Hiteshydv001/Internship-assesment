@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Loader2, Send, User, Bot } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   role: "user" | "ai";
@@ -63,7 +64,7 @@ const TrackerInterface = () => {
         const { done, value } = await reader.read();
         if (done) break;
         
-        const chunk = decoder.decode(value);
+        const chunk = decoder.decode(value, { stream: true });
         fullResponse += chunk;
         setStreamingMessage(fullResponse);
       }
@@ -107,7 +108,9 @@ const TrackerInterface = () => {
                   : "bg-muted"
               }`}
             >
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+              <div className="text-sm leading-relaxed prose prose-sm max-w-none">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              </div>
             </div>
           </div>
         ))}
@@ -119,7 +122,9 @@ const TrackerInterface = () => {
             </div>
             <div className="rounded-2xl px-4 py-3 bg-muted">
               {streamingMessage ? (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{streamingMessage}</p>
+                <div className="text-sm leading-relaxed prose prose-sm max-w-none">
+                  <ReactMarkdown>{streamingMessage}</ReactMarkdown>
+                </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />

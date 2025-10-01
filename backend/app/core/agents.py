@@ -42,10 +42,16 @@ expenses_db: List[Dict] = []
 def add_expense(amount: float, category: str, description: str) -> str:
     """
     Adds a new expense record. Use this tool when the user wants to record a spending.
+    
     Args:
-        amount: The numerical amount of the expense.
-        category: The category of the expense (e.g., 'food', 'rent', 'travel').
-        description: A brief description of the expense.
+        amount: The numerical amount of the expense (extract numbers from user input, convert currency if needed)
+        category: The category of the expense. Use these categories: 'food', 'transport', 'shopping', 'entertainment', 'bills', 'health', 'education', 'other'
+        description: A brief description of what the expense was for (e.g., 'coffee', 'bus fare', 'groceries')
+        
+    Examples of user inputs and how to extract parameters:
+    - "add 30 rs for coffee" -> amount: 30.0, category: "food", description: "coffee" 
+    - "spent $50 on groceries" -> amount: 50.0, category: "food", description: "groceries"
+    - "add 20 for bus" -> amount: 20.0, category: "transport", description: "bus fare"
     """
     new_expense = {
         "id": len(expenses_db) + 1,
@@ -55,7 +61,7 @@ def add_expense(amount: float, category: str, description: str) -> str:
         "timestamp": datetime.now().isoformat(),
     }
     expenses_db.append(new_expense)
-    return f"Successfully added expense: {description} (${amount}) in category '{category}'."
+    return f"Successfully added expense: {description} (₹{amount}) in category '{category}'."
 
 @tool
 def get_expense_summary() -> str:
@@ -87,41 +93,44 @@ def get_expense_agent_executor() -> AgentExecutor:
     prompt_template = """
     You are a helpful personal finance assistant. Your goal is to help the user track their expenses using the available tools.
     
+    When users mention expenses, extract the information and use proper JSON format:
+    
+    Examples:
+    - "add 30 rs for coffee" -> Action Input: {{"amount": 30.0, "category": "food", "description": "coffee"}}
+    - "spent 50 on groceries" -> Action Input: {{"amount": 50.0, "category": "food", "description": "groceries"}}
+    - "paid 20 for bus fare" -> Action Input: {{"amount": 20.0, "category": "transport", "description": "bus fare"}}
+    
+    Categories: food, transport, shopping, entertainment, bills, health, education, other
+    
     TOOLS:
     ------
     You have access to the following tools:
     {tools}
 
-    The tool names are: {tool_names}
+    Tool names: {tool_names}
 
-    To use a tool, please use the following format:
-    
-    ```json
-    {{
-        "tool": "$TOOL_NAME",
-        "tool_input": "$INPUT"
-    }}
-    ```
-    
+    Use the following format:
+
+    Thought: Do I need to use a tool? Yes
+    Action: the action to take, should be one of [{tool_names}]
+    Action Input: {{"amount": 30.0, "category": "food", "description": "coffee"}}
+    Observation: the result of the action
+    ... (this Thought/Action/Action Input/Observation can repeat N times)
+    Thought: Do I need to use a tool? No
+    Final Answer: the final answer to the original input question
+
     When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
     
-    ```json
-    {{
-        "action": "Final Answer",
-        "action_input": "Your response here"
-    }}
-    ```
+    Thought: Do I need to use a tool? No
+    Final Answer: [your response here]
     
     Begin!
     
     PREVIOUS CONVERSATION HISTORY:
     {chat_history}
     
-    USER'S INPUT:
-    {input}
-    
-    SCRATCHPAD:
-    {agent_scratchpad}
+    Question: {input}
+    Thought: {agent_scratchpad}
     """
     
     prompt = ChatPromptTemplate.from_template(prompt_template)
@@ -131,6 +140,8 @@ def get_expense_agent_executor() -> AgentExecutor:
         agent=agent, 
         tools=tools, 
         verbose=True, # Set to True for debugging to see the agent's thoughts
-        handle_parsing_errors=True # Helps with robustness
+        handle_parsing_errors=True, # Helps with robustness
+        max_iterations=3,  # Limit iterations to prevent loops
+        early_stopping_method="generate"  # Stop early if successful
     )
     return agent_executor

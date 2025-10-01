@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Loader2, FileText } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 const SummarizerInterface = () => {
   const [text, setText] = useState("");
@@ -42,7 +43,7 @@ const SummarizerInterface = () => {
         const { done, value } = await reader.read();
         if (done) break;
         
-        const chunk = decoder.decode(value);
+        const chunk = decoder.decode(value, { stream: true });
         setSummary((prev) => prev + chunk);
       }
     } catch (err) {
@@ -101,7 +102,9 @@ const SummarizerInterface = () => {
             </div>
             <div className="flex-1">
               <h3 className="font-semibold mb-2">Summary</h3>
-              <p className="text-muted-foreground leading-relaxed">{summary}</p>
+              <div className="text-muted-foreground leading-relaxed prose prose-sm max-w-none">
+                <ReactMarkdown>{summary}</ReactMarkdown>
+              </div>
             </div>
           </div>
         </Card>

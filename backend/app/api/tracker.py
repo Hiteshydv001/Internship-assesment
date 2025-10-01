@@ -28,6 +28,13 @@ def handle_tracker_prompt():
                     yield chunk["output"]
                     
         except Exception as e:
-            yield f'{{"error": "An error occurred during streaming: {str(e)}"}}'
+            yield f"Error: {str(e)}"
 
-    return Response(generate(), mimetype='text/plain')
+    return Response(generate(), 
+                   mimetype='text/plain',
+                   headers={
+                       'Cache-Control': 'no-cache',
+                       'Connection': 'keep-alive',
+                       'Access-Control-Allow-Origin': '*',
+                       'Access-Control-Allow-Headers': 'Content-Type'
+                   })
