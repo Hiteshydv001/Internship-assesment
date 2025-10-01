@@ -12,8 +12,9 @@ from langchain.agents import create_react_agent, AgentExecutor
 from config import Config
 
 # --- SHARED LLM INSTANCE ---
-# Initialize the Gemini model once to be reused across the application
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", google_api_key=Config.GEMINI_API_KEY)
+# CORRECTED: Switched to the recommended free-tier 'gemini-2.5-flash' model
+# as of October 2025.
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=Config.GEMINI_API_KEY)
 
 
 # --- FEATURE 1: Q&A BOT ---
@@ -83,7 +84,6 @@ def get_expense_agent_executor() -> AgentExecutor:
     """Creates and returns a LangChain agent for managing expenses."""
     tools = [add_expense, get_expense_summary]
     
-    # This prompt template has been corrected to include the {tool_names} variable.
     prompt_template = """
     You are a helpful personal finance assistant. Your goal is to help the user track their expenses using the available tools.
     
