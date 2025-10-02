@@ -10,21 +10,15 @@ def create_app():
     # Load configuration from config.py
     app.config.from_object(Config)
     
-    # Enable CORS with specific origins
-    # Allow requests from Vercel, Render, and localhost
+    # Enable CORS to allow all origins (for development and production)
+    # In production, consider restricting to specific domains
     CORS(app, resources={
         r"/api/*": {
-            "origins": [
-                "https://internship-assesment-three.vercel.app",
-                "https://kunal-ai-web.onrender.com",
-                "http://localhost:5173",
-                "http://localhost:8080",
-                "http://localhost:8081",
-                "http://localhost:3000"
-            ],
+            "origins": "*",  # Allow all origins
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True,
+            "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+            "expose_headers": ["Content-Type", "X-Session-ID"],
+            "supports_credentials": False,  # Set to False when using origins: "*"
             "max_age": 3600
         }
     })
