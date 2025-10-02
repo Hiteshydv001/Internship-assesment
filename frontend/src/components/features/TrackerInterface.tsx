@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Loader2, Send, User, Bot } from "lucide-react";
+import { Loader2, Send, User, Bot, Trash2, Brain } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 interface Message {
@@ -21,6 +21,10 @@ const TrackerInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState("");
+  const [sessionId, setSessionId] = useState<string>(() => {
+    // Generate a unique session ID on mount
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  });
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,7 +49,10 @@ const TrackerInterface = () => {
       const response = await fetch(`${apiUrl}/tracker`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userMessage }),
+        body: JSON.stringify({ 
+          prompt: userMessage,
+          session_id: sessionId 
+        }),
       });
 
       if (!response.ok) {
@@ -82,33 +89,66 @@ const TrackerInterface = () => {
     }
   };
 
+  const handleClearChat = () => {
+    setChatHistory([
+      {
+        role: "ai",
+        content: "Hi! I'm your expense tracker. You can add expenses like 'add $20 for coffee' or ask me 'what's my total spending?'"
+      }
+    ]);
+    setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    setError(null);
+    setStreamingMessage("");
+  };
+
   return (
-    <div className="flex flex-col h-[600px] animate-fade-in">
-      <Card className="flex-1 overflow-y-auto p-4 space-y-4 shadow-elegant">
+    <div className="max-w-4xl mx-auto flex flex-col h-[600px] animate-fade-in">
+      {/* Memory Status Badge */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 backdrop-blur-sm">
+          <Brain className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
+            Memory Active • {chatHistory.length - 1} messages
+          </span>
+        </div>
+        <Button
+          type="button"
+          onClick={handleClearChat}
+          variant="ghost"
+          size="sm"
+          className="text-xs hover:bg-destructive/10 hover:text-destructive"
+          disabled={isLoading}
+        >
+          <Trash2 className="h-3 w-3 mr-1" />
+          Clear
+        </Button>
+      </div>
+
+      <Card className="flex-1 overflow-y-auto p-6 space-y-4 shadow-lg hover:shadow-xl transition-shadow border-2">
         {chatHistory.map((message, index) => (
           <div
             key={index}
             className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}
           >
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md ${
               message.role === "user" 
-                ? "bg-primary" 
-                : "bg-gradient-primary"
+                ? "bg-gradient-to-br from-orange-500 to-red-600" 
+                : "bg-gradient-to-br from-purple-500 to-pink-600"
             }`}>
               {message.role === "user" ? (
-                <User className="w-4 h-4 text-white" />
+                <User className="w-5 h-5 text-white" />
               ) : (
-                <Bot className="w-4 h-4 text-white" />
+                <Bot className="w-5 h-5 text-white" />
               )}
             </div>
             <div
-              className={`rounded-2xl px-4 py-3 max-w-[80%] ${
+              className={`rounded-2xl px-5 py-3 max-w-[80%] shadow-md ${
                 message.role === "user"
-                  ? "bg-primary text-primary-foreground ml-auto"
-                  : "bg-muted"
+                  ? "bg-gradient-to-br from-orange-500 to-red-600 text-white ml-auto"
+                  : "bg-muted/80 backdrop-blur-sm"
               }`}
             >
-              <div className="text-sm leading-relaxed prose prose-sm max-w-none">
+              <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert">
                 <ReactMarkdown>{message.content}</ReactMarkdown>
               </div>
             </div>
@@ -117,12 +157,12 @@ const TrackerInterface = () => {
         
         {isLoading && (
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center flex-shrink-0">
-              <Bot className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center flex-shrink-0 shadow-md">
+              <Bot className="w-5 h-5 text-white" />
             </div>
-            <div className="rounded-2xl px-4 py-3 bg-muted">
+            <div className="rounded-2xl px-5 py-3 bg-muted/80 backdrop-blur-sm shadow-md">
               {streamingMessage ? (
-                <div className="text-sm leading-relaxed prose prose-sm max-w-none">
+                <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert">
                   <ReactMarkdown>{streamingMessage}</ReactMarkdown>
                 </div>
               ) : (
@@ -139,21 +179,26 @@ const TrackerInterface = () => {
       </Card>
 
       {error && (
-        <div className="mt-2 p-2 bg-destructive/10 border border-destructive rounded-lg">
-          <p className="text-xs text-destructive">{error}</p>
+        <div className="mt-3 p-3 bg-destructive/10 border-2 border-destructive rounded-lg shadow-lg">
+          <p className="text-sm text-destructive font-medium">{error}</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
+      <form onSubmit={handleSubmit} className="mt-4 flex gap-3">
         <Input
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Type a command or question..."
           disabled={isLoading}
-          className="flex-1"
+          className="flex-1 border-2 shadow-md focus:shadow-lg transition-shadow"
         />
-        <Button type="submit" disabled={isLoading || !prompt.trim()} size="icon">
-          <Send className="h-4 w-4" />
+        <Button 
+          type="submit" 
+          disabled={isLoading || !prompt.trim()} 
+          size="lg"
+          className="px-6 shadow-lg hover:shadow-xl transition-all"
+        >
+          <Send className="h-5 w-5" />
         </Button>
       </form>
     </div>

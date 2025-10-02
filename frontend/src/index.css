@@ -123,6 +123,14 @@ All colors MUST be HSL.
     animation: fadeIn 0.5s ease-in;
   }
 
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;

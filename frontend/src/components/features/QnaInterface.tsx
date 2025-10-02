@@ -54,10 +54,10 @@ const QnaInterface = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in max-w-4xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="question" className="block text-sm font-medium mb-2">
+        <div className="space-y-2">
+          <label htmlFor="question" className="block text-sm font-medium text-foreground">
             Ask me anything
           </label>
           <Textarea
@@ -65,23 +65,24 @@ const QnaInterface = () => {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Type your question here..."
-            className="min-h-[120px] resize-none"
+            className="min-h-[120px] resize-none border-2 focus:border-primary transition-colors"
             disabled={isLoading}
           />
         </div>
         <Button 
           type="submit" 
           disabled={isLoading || !question.trim()}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto px-6 shadow-lg hover:shadow-xl transition-shadow"
+          size="lg"
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               Thinking...
             </>
           ) : (
             <>
-              <MessageSquare className="mr-2 h-4 w-4" />
+              <MessageSquare className="mr-2 h-5 w-5" />
               Ask Question
             </>
           )}
@@ -89,20 +90,20 @@ const QnaInterface = () => {
       </form>
 
       {error && (
-        <Card className="p-4 border-destructive bg-destructive/10">
-          <p className="text-sm text-destructive">{error}</p>
+        <Card className="p-4 border-2 border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800">
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
         </Card>
       )}
 
       {answer && (
-        <Card className="p-6 shadow-elegant animate-fade-in">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center flex-shrink-0">
-              <MessageSquare className="w-4 h-4 text-white" />
+        <Card className="p-6 shadow-lg border-2 hover:shadow-xl transition-shadow animate-fade-in bg-gradient-to-br from-background to-muted/20">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
+              <MessageSquare className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold mb-2">Answer</h3>
-              <div className="text-muted-foreground leading-relaxed prose prose-sm max-w-none">
+              <h3 className="font-semibold text-lg mb-3 text-foreground">Answer</h3>
+              <div className="text-muted-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown>{answer}</ReactMarkdown>
               </div>
             </div>
