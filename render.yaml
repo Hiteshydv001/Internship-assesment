@@ -17,11 +17,10 @@ services:
 
   # Service 2: The React/Vite Frontend (Static Site)
   - name: kunal-ai-web
-    type: web # CORRECTED: The type for a static site is 'web'.
-    runtime: node # ADDED: We must specify the environment for the build command.
+    type: static_site # CORRECTED: The definitive type for a static site in a Blueprint is 'static_site'.
     rootDir: frontend
     buildCommand: "npm install && npm run build"
-    publishDir: dist # This key, combined with the absence of a 'startCommand', tells Render it's a Static Site.
+    publishDir: dist
     routes:
       # Rewrite rule for single-page applications like React Router.
       - type: rewrite
