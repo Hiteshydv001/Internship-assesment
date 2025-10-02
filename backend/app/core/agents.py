@@ -18,9 +18,10 @@ def get_summarizer_chain():
     prompt = ChatPromptTemplate.from_template("Summarize the following text in exactly 3 concise sentences:\n\n{text}")
     return prompt | llm
 
-# --- EXPENSE TRACKER WITH SIMPLE STRING INPUT ---
+# --- EXPENSE TRACKER WITH BUDGET MANAGEMENT ---
 
 expenses_db: List[Dict] = []
+budget_db: Dict = {"amount": None, "set_at": None}  # Budget storage
 
 def _add_expense_impl(amount: float, category: str, description: str) -> str:
     """Internal function to add expense to database."""
@@ -32,7 +33,21 @@ def _add_expense_impl(amount: float, category: str, description: str) -> str:
         "timestamp": datetime.now().isoformat(),
     }
     expenses_db.append(new_expense)
-    return f"Successfully added expense: {description} (₹{amount}) in category '{category}'."
+    
+    # Check budget if set
+    budget_warning = ""
+    if budget_db["amount"] is not None:
+        total_spent = sum(e["amount"] for e in expenses_db)
+        remaining = budget_db["amount"] - total_spent
+        
+        if remaining <= 0:
+            budget_warning = f"\n\n🚨 BUDGET ALERT: You've EXCEEDED your budget of ₹{budget_db['amount']}! You've spent ₹{total_spent:.2f} (₹{abs(remaining):.2f} over budget)."
+        elif remaining < budget_db["amount"] * 0.2:  # Less than 20% remaining
+            budget_warning = f"\n\n⚠️ WARNING: You're running low on budget! Only ₹{remaining:.2f} left out of ₹{budget_db['amount']}."
+        else:
+            budget_warning = f"\n💰 Budget remaining: ₹{remaining:.2f} out of ₹{budget_db['amount']}"
+    
+    return f"Successfully added expense: {description} (₹{amount}) in category '{category}'.{budget_warning}"
 
 @tool
 def add_expense(expense_data: str) -> str:
@@ -59,10 +74,13 @@ def add_expense(expense_data: str) -> str:
 
 @tool
 def get_expense_summary(dummy_input: str = "") -> str:
-    """Get summary of all expenses. NO INPUT needed - just call with empty string or any value."""
+    """Get detailed summary of all expenses with budget status. NO INPUT needed."""
     try:
         if not expenses_db:
-            return "No expenses recorded yet."
+            msg = "📊 No expenses recorded yet."
+            if budget_db["amount"] is not None:
+                msg += f"\n💰 Budget set: ₹{budget_db['amount']}"
+            return msg
         
         total = sum(e["amount"] for e in expenses_db)
         by_cat = {}
@@ -70,14 +88,111 @@ def get_expense_summary(dummy_input: str = "") -> str:
             cat = e["category"]
             by_cat[cat] = by_cat.get(cat, 0) + e["amount"]
         
-        result = f"Total: ₹{total:.2f}\n\nBreakdown by category:\n"
-        for cat, amt in sorted(by_cat.items()):
-            result += f"- {cat.capitalize()}: ₹{amt:.2f}\n"
+        result = f"📊 EXPENSE SUMMARY\n"
+        result += f"━━━━━━━━━━━━━━━━━━\n"
+        result += f"💸 Total Spent: ₹{total:.2f}\n\n"
         
-        # Ensure we return a plain string, not a generator
+        # Budget status
+        if budget_db["amount"] is not None:
+            remaining = budget_db["amount"] - total
+            percentage_used = (total / budget_db["amount"]) * 100
+            
+            result += f"💰 Budget Status:\n"
+            result += f"   Budget: ₹{budget_db['amount']}\n"
+            result += f"   Spent: ₹{total:.2f} ({percentage_used:.1f}%)\n"
+            
+            if remaining > 0:
+                result += f"   Remaining: ₹{remaining:.2f}\n"
+                if percentage_used >= 80:
+                    result += f"   ⚠️ WARNING: {100-percentage_used:.1f}% budget remaining!\n"
+            else:
+                result += f"   🚨 OVER BUDGET by ₹{abs(remaining):.2f}!\n"
+            result += f"\n"
+        
+        # Category breakdown
+        result += f"📂 By Category:\n"
+        for cat, amt in sorted(by_cat.items(), key=lambda x: x[1], reverse=True):
+            percentage = (amt / total) * 100
+            result += f"   • {cat.capitalize()}: ₹{amt:.2f} ({percentage:.1f}%)\n"
+        
+        # Recent expenses
+        result += f"\n📝 Recent Expenses:\n"
+        recent = expenses_db[-3:] if len(expenses_db) <= 3 else expenses_db[-3:]
+        for exp in reversed(recent):
+            result += f"   • {exp['description']}: ₹{exp['amount']} ({exp['category']})\n"
+        
         return str(result)
     except Exception as e:
         return f"Error getting summary: {str(e)}"
+
+@tool
+def set_budget(budget_amount: str) -> str:
+    """Set a budget limit. Input should be a number (e.g., '1000' for ₹1000)."""
+    try:
+        amount = float(budget_amount.strip())
+        if amount <= 0:
+            return "Error: Budget must be a positive number"
+        
+        budget_db["amount"] = amount
+        budget_db["set_at"] = datetime.now().isoformat()
+        
+        # Calculate current spending status
+        if expenses_db:
+            total_spent = sum(e["amount"] for e in expenses_db)
+            remaining = amount - total_spent
+            
+            msg = f"✅ Budget set to ₹{amount}\n"
+            if remaining > 0:
+                msg += f"💰 Current spending: ₹{total_spent:.2f}\n"
+                msg += f"💵 Remaining: ₹{remaining:.2f}"
+            else:
+                msg += f"🚨 Warning: You've already spent ₹{total_spent:.2f}, which exceeds your budget by ₹{abs(remaining):.2f}!"
+        else:
+            msg = f"✅ Budget set to ₹{amount}. Start tracking your expenses!"
+        
+        return msg
+    except ValueError:
+        return "Error: Budget amount must be a valid number"
+    except Exception as e:
+        return f"Error setting budget: {str(e)}"
+
+@tool
+def get_budget_status(dummy_input: str = "") -> str:
+    """Check current budget status and remaining amount. NO INPUT needed."""
+    try:
+        if budget_db["amount"] is None:
+            return "💡 No budget set yet. Set a budget with 'set budget to [amount]' to start tracking!"
+        
+        total_spent = sum(e["amount"] for e in expenses_db)
+        remaining = budget_db["amount"] - total_spent
+        percentage_used = (total_spent / budget_db["amount"]) * 100
+        
+        result = f"💰 BUDGET STATUS\n"
+        result += f"━━━━━━━━━━━━━━━━━━\n"
+        result += f"Budget: ₹{budget_db['amount']}\n"
+        result += f"Spent: ₹{total_spent:.2f} ({percentage_used:.1f}%)\n"
+        
+        if remaining > 0:
+            result += f"Remaining: ₹{remaining:.2f}\n\n"
+            
+            if percentage_used >= 90:
+                result += "🚨 CRITICAL: Only {:.1f}% of budget remaining!".format(100-percentage_used)
+            elif percentage_used >= 75:
+                result += "⚠️ WARNING: {:.1f}% of budget remaining!".format(100-percentage_used)
+            elif percentage_used >= 50:
+                result += "ℹ️ You've used over half your budget"
+            else:
+                result += "✅ You're doing well! Keep tracking."
+        else:
+            result += f"🚨 OVER BUDGET by ₹{abs(remaining):.2f}!\n"
+            result += f"\nConsider:\n"
+            result += f"• Reviewing your expenses\n"
+            result += f"• Cutting unnecessary spending\n"
+            result += f"• Increasing your budget if needed"
+        
+        return result
+    except Exception as e:
+        return f"Error checking budget: {str(e)}"
 
 @tool
 def calculate(expression: str) -> str:
@@ -90,32 +205,55 @@ def calculate(expression: str) -> str:
         return f"Error calculating: {str(e)}"
 
 def get_expense_agent_executor() -> AgentExecutor:
-    tools = [add_expense, get_expense_summary, calculate]
+    tools = [add_expense, get_expense_summary, set_budget, get_budget_status, calculate]
     
-    prompt_template = """You are a helpful expense tracking assistant with memory of past conversations.
+    prompt_template = """You are a friendly and proactive expense tracking assistant! 💰
+
+Your goal is to help users manage their money wisely by:
+- Tracking every expense they add
+- Setting and monitoring budgets
+- Warning them when they're close to or over budget
+- Providing helpful financial insights
 
 You have access to these tools:
 {tools}
 
 Tool Names: {tool_names}
 
-ALWAYS use this EXACT format (no deviations):
+ALWAYS use this EXACT format:
 
 Question: {input}
-Thought: [your reasoning about what to do]
-Action: [EXACTLY ONE tool name from: {tool_names}]
-Action Input: [the input for that tool]
-Observation: [the tool's result will appear here]
-Thought: [analyze the observation - do you have enough info to answer?]
-Final Answer: [your response to the user]
+Thought: [what should I do to help the user?]
+Action: [tool name from: {tool_names}]
+Action Input: [input for that tool]
+Observation: [tool result appears here]
+Thought: [do I have enough info now?]
+Final Answer: [friendly, helpful response with emojis and insights]
 
-CRITICAL RULES:
-1. After you see an Observation, you MUST provide a Final Answer (no more actions)
-2. NEVER repeat the same Action/Action Input twice
-3. For add_expense: Use "amount|category|description" (e.g., "10|food|tea")
-4. For get_expense_summary: MUST use empty string "" or "summary" as Action Input
-5. For calculate: Use math expression like "10+20"
-6. When user asks about "total", "summary", or "spending", use get_expense_summary with ""
+TOOL USAGE GUIDE:
+• add_expense: "amount|category|description" → Example: "50|food|lunch at cafe"
+• get_expense_summary: "" (empty string or "summary")
+• set_budget: "amount" → Example: "1000"
+• get_budget_status: "" (empty string)
+• calculate: "math expression" → Example: "50*10"
+
+PERSONALITY TRAITS:
+✨ Be conversational and warm
+💡 Proactively suggest budget insights
+⚠️ Alert users about budget concerns
+🎯 Keep responses concise but informative
+📊 Use emojis to make info engaging
+
+PROACTIVE BEHAVIORS:
+- When adding expense: Show budget impact automatically
+- When near budget (>75%): Suggest they slow down spending
+- When over budget: Offer helpful tips
+- After setting budget: Congratulate and encourage tracking
+
+IMPORTANT:
+- After seeing Observation, provide Final Answer (don't repeat actions)
+- NEVER use same Action twice in a row
+- Always check budget status after adding expenses
 
 Previous conversation:
 {chat_history}

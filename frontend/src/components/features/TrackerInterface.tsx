@@ -144,11 +144,15 @@ const TrackerInterface = () => {
             <div
               className={`rounded-2xl px-5 py-3 max-w-[80%] shadow-md ${
                 message.role === "user"
-                  ? "bg-gradient-to-br from-orange-500 to-red-600 text-white ml-auto"
+                  ? "bg-gradient-to-br from-orange-500 to-red-600 ml-auto"
                   : "bg-muted/80 backdrop-blur-sm"
               }`}
             >
-              <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert">
+              <div className={`text-sm leading-relaxed prose prose-sm max-w-none ${
+                message.role === "user"
+                  ? "text-white [&>*]:text-white [&_strong]:text-white [&_p]:text-white [&_code]:text-white"
+                  : "dark:prose-invert"
+              }`}>
                 <ReactMarkdown>{message.content}</ReactMarkdown>
               </div>
             </div>
