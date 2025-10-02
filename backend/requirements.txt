@@ -13,4 +13,5 @@ langchain-core==0.2.2
 # Environment Variables
 python-dotenv==1.0.1
 
+gevent
 pydantic==1.10.13
