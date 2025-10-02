@@ -32,11 +32,14 @@ def handle_tracker_prompt():
             "chat_history": chat_history
         })
         
-        # Extract the output
+        # Extract the output safely
         if isinstance(result, dict):
             full_response = result.get("output") or result.get("result") or str(result)
         else:
             full_response = str(result)
+        
+        # Ensure we have a string, not a generator or other object
+        full_response = str(full_response) if full_response else ""
         
         # Clean up any repeated content or verbose output
         if full_response and full_response.strip():
@@ -58,6 +61,9 @@ def handle_tracker_prompt():
         chat_history.append(f"AI: {full_response}")
         conversation_histories[session_id] = chat_history[-10:]  # Keep last 10 messages
 
+    except StopIteration:
+        full_response = "I encountered a processing issue. Your request may have been completed. Try checking your summary."
+        print("StopIteration caught in tracker.py")
     except TimeoutError:
         full_response = "Request took too long. Please try a simpler command."
     except Exception as e:

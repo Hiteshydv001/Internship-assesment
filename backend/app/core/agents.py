@@ -58,21 +58,26 @@ def add_expense(expense_data: str) -> str:
         return f"Error: {str(e)}"
 
 @tool
-def get_expense_summary() -> str:
-    """Get summary of all expenses. NO INPUT needed - just call this tool directly."""
-    if not expenses_db:
-        return "No expenses recorded yet."
-    
-    total = sum(e["amount"] for e in expenses_db)
-    by_cat = {}
-    for e in expenses_db:
-        cat = e["category"]
-        by_cat[cat] = by_cat.get(cat, 0) + e["amount"]
-    
-    result = f"Total: ₹{total:.2f}\n\nBreakdown by category:\n"
-    for cat, amt in sorted(by_cat.items()):
-        result += f"- {cat.capitalize()}: ₹{amt:.2f}\n"
-    return result
+def get_expense_summary(dummy_input: str = "") -> str:
+    """Get summary of all expenses. NO INPUT needed - just call with empty string or any value."""
+    try:
+        if not expenses_db:
+            return "No expenses recorded yet."
+        
+        total = sum(e["amount"] for e in expenses_db)
+        by_cat = {}
+        for e in expenses_db:
+            cat = e["category"]
+            by_cat[cat] = by_cat.get(cat, 0) + e["amount"]
+        
+        result = f"Total: ₹{total:.2f}\n\nBreakdown by category:\n"
+        for cat, amt in sorted(by_cat.items()):
+            result += f"- {cat.capitalize()}: ₹{amt:.2f}\n"
+        
+        # Ensure we return a plain string, not a generator
+        return str(result)
+    except Exception as e:
+        return f"Error getting summary: {str(e)}"
 
 @tool
 def calculate(expression: str) -> str:
@@ -105,12 +110,12 @@ Thought: [analyze the observation - do you have enough info to answer?]
 Final Answer: [your response to the user]
 
 CRITICAL RULES:
-1. After you see an Observation, you MUST either use another Action OR provide Final Answer
+1. After you see an Observation, you MUST provide a Final Answer (no more actions)
 2. NEVER repeat the same Action/Action Input twice
 3. For add_expense: Use "amount|category|description" (e.g., "10|food|tea")
-4. For get_expense_summary: Use empty string "" as input
+4. For get_expense_summary: MUST use empty string "" or "summary" as Action Input
 5. For calculate: Use math expression like "10+20"
-6. After successful add_expense, immediately give Final Answer (don't call it again!)
+6. When user asks about "total", "summary", or "spending", use get_expense_summary with ""
 
 Previous conversation:
 {chat_history}

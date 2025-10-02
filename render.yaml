@@ -6,32 +6,23 @@ services:
   - name: kunal-ai-api
     type: web
     runtime: python
-    rootDir: backend # Tells Render to look inside the 'backend' folder
+    rootDir: backend
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn main:app"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: GEMINI_API_KEY
-        sync: false # IMPORTANT: This tells Render to use the secret you'll add in the dashboard.
+        fromSecret: true # CORRECTED: 'fromSecret: true' is the correct syntax for dashboard secrets.
 
   # Service 2: The React/Vite Frontend (as a Static Site)
   - name: kunal-ai-web
-    type: web
-    rootDir: frontend # Tells Render to look inside the 'frontend' folder
+    type: static # CORRECTED: This must be 'static' for a Vite build, not 'web'.
+    rootDir: frontend
     buildCommand: "npm install && npm run build"
-    staticPublishPath: dist # The folder Vite builds to
-    # This rewrite rule is CRITICAL for React Router to work.
-    # It ensures that all paths (e.g., /qna, /summarizer) are handled by index.html.
+    publishDir: dist # CORRECTED: The key is 'publishDir', not 'staticPublishPath'.
     routes:
+      # This rewrite rule is correct and is now valid because the type is 'static'.
       - type: rewrite
         source: /*
         destination: /index.html
-    envVars:
-      # This automatically injects the backend's live URL into the frontend's build process.
-      # Your frontend code (import.meta.env.VITE_API_URL) will receive this value.
-      - key: VITE_API_URL 
-        fromService:
-          type: web
-          name: kunal-ai-api # Must match the backend service name above
-          property: url
