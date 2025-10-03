@@ -26,7 +26,7 @@ def ask_question():
                     # Send 1 character at a time for visible streaming effect
                     for char in content:
                         yield char
-                        time.sleep(0.01)  # 10ms delay for visible streaming
+                        time.sleep(0.03)  # 30ms delay for slower, more readable streaming
             
             # If no streaming chunks were received, fall back to regular invoke
             if not stream_worked:
@@ -39,7 +39,7 @@ def ask_question():
                 # Stream character by character even for non-streaming response
                 for char in content:
                     yield char
-                    time.sleep(0.01)  # 10ms delay for visible streaming
+                    time.sleep(0.03)  # 30ms delay for slower, more readable streaming
                     
         except Exception as e:
             error_msg = f"Error: An error occurred during streaming: {str(e)}"

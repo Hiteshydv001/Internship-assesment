@@ -81,7 +81,7 @@ def handle_tracker_prompt():
         try:
             for char in chars:
                 yield char
-                time.sleep(0.01)
+                time.sleep(0.03)  # 30ms delay for slower, more readable streaming
         except GeneratorExit:
             pass
         except StopIteration:
