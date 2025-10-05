@@ -9,6 +9,7 @@ const Navbar = () => {
     { path: "/qna", label: "Q&A Bot" },
     { path: "/summarizer", label: "Summarizer" },
     { path: "/tracker", label: "Expense Tracker" },
+    { path: "/docs", label: "Docs" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -18,9 +19,11 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-bold text-xl">
-            <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
+            <img 
+              src="/favicon.ico" 
+              alt="Kunal AI Logo" 
+              className="w-8 h-8 rounded-lg"
+            />
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Kunal AI
             </span>

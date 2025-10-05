@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Qna from "./pages/Qna";
 import Summarizer from "./pages/Summarizer";
 import Tracker from "./pages/Tracker";
+import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
               <Route path="/qna" element={<Qna />} />
               <Route path="/summarizer" element={<Summarizer />} />
               <Route path="/tracker" element={<Tracker />} />
+              <Route path="/docs" element={<Docs />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
