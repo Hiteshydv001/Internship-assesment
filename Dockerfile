@@ -15,15 +15,12 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend requirements
-COPY backend/requirements.txt .
+# Copy all backend files first
+COPY backend/ /app/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Copy backend application
-COPY backend/ .
+    pip install --no-cache-dir -r /app/requirements.txt
 
 # Expose port
 EXPOSE 5001
