@@ -1,0 +1,18 @@
+[phases.setup]
+nixPkgs = ["python311", "gcc", "curl"]
+
+[phases.install]
+cmds = [
+    "cd backend",
+    "pip install --upgrade pip",
+    "pip install -r requirements.txt"
+]
+
+[phases.build]
+cmds = []
+
+[start]
+cmd = "cd backend && gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --log-level info --access-logfile - --error-logfile -"
+
+[variables]
+PORT = "5001"
