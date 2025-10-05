@@ -1,10 +1,9 @@
-# Dockerfile at root - points to backend
+# Dockerfile for Railway deployment - builds backend Flask app
 FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Set environment variables
+# Environment configuration
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=5001
@@ -15,19 +14,19 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy all backend files first
+# Copy entire backend directory
 COPY backend/ /app/
 
-# Install Python dependencies
+# Install Python packages
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/requirements.txt
 
-# Expose port
+# Expose application port
 EXPOSE 5001
 
-# Health check
+# Health check endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:5001/api/health || exit 1
 
-# Start gunicorn
+# Start the Flask application with gunicorn
 CMD ["gunicorn", "main:app", "--bind", "0.0.0.0:5001", "--workers", "2", "--timeout", "120", "--log-level", "info", "--access-logfile", "-", "--error-logfile", "-"]
