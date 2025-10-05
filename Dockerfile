@@ -30,4 +30,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:5001/api/health || exit 1
 
 # Start application
-CMD gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --log-level info --access-logfile - --error-logfile -
+CMD ["sh", "-c", "gunicorn main:app --bind 0.0.0.0:${PORT:-5001} --workers 2 --timeout 120 --log-level info --access-logfile - --error-logfile -"]
