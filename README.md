@@ -7,6 +7,15 @@ A full-stack AI-powered application featuring three intelligent tools: Q&A Bot, 
 ![React](https://img.shields.io/badge/React-18.3.1-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue)
 
+## ▶️ Demo Video
+
+You can watch the project demo directly from this repository. GitHub READMEs don't allow iframes, so click the thumbnail below to open a playable preview of the demo page.
+
+[![Kunal AI Demo](https://img.youtube.com/vi/RztUMrw_sJ4/maxresdefault.jpg)](https://htmlpreview.github.io/?https://github.com/Hiteshydv001/Internship-assesment/blob/main/docs/video.html)
+
+Or open the video on YouTube: https://youtu.be/RztUMrw_sJ4
+
+
 ## 🌟 Features
 
 ### 1. **Q&A Bot**
